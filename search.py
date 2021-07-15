@@ -180,11 +180,6 @@ def breadthFirstSearch(problem):
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    # Importa a biblioteca de matemática para ter acesso à constante inf
-    import math
-
-    # Dicionário do custo para ir do nó inicial aos nós expandidos
-    custos = dict()
     
     # Conjunto dos nós expandidos
     expandidos = set()
@@ -195,15 +190,12 @@ def uniformCostSearch(problem):
     estadoInicial = problem.getStartState()
     
     # Inicia a fronteira com o estado inicial, custo 0 e a lista de ações vazia
-    fronteira.push((estadoInicial, []), 0)
-
-    # Inicia o dicionário dos custos para o estado inicial com 0
-    custos[estadoInicial] = 0
+    fronteira.push((estadoInicial, [], 0), 0)
 
     # Enquanto existe nós na fronteira
     while not fronteira.isEmpty():
         # Obtém e remove o próximo nó da fronteira
-        proximoEstado, acoes = fronteira.pop()
+        proximoEstado, acoes, custo = fronteira.pop()
         
         # Se o nó obtido é o objetivo
         if problem.isGoalState(proximoEstado):
@@ -221,18 +213,18 @@ def uniformCostSearch(problem):
         sucessores = problem.getSuccessors(proximoEstado)
 
         # Itera pelos sucessores do nó
-        for (sucessor, acao, custo) in sucessores:
-            # Se o sucessor não foi expandido e o custo para alcançá-lo até o momento é maior do que o
-            # custo de ir do nó inicial até o nó atual somado do custo de ir do nó atual até o sucessor
-            if sucessor not in expandidos and custos.get(sucessor, math.inf) > custos.get(proximoEstado, math.inf) + custo:
-                # Atualiza o novo menor custo de alcançar o sucessor a partir do nó inicial
-                custos[sucessor] = custos.get(proximoEstado, math.inf) + custo
+        for (sucessor, acao, custoSucessor) in sucessores:
+            # Se o sucessor não foi expandido
+            if sucessor not in expandidos:
+                # Calcula o novo custo de chegar ao sucessor
+                novoCusto = custo+custoSucessor
 
                 # Acrescenta a ação tomada para alcançá-lo
                 novasAcoes = acoes + [acao]
 
-                # Coloca o sucessor na fronteira, com seu novo custo e lista de ações tomadas
-                fronteira.push((sucessor, novasAcoes.copy()), custos[sucessor])
+                # Coloca o sucessor na fronteira, com seu novo e com a lista de ações tomadas. 
+                # Caso o novo custo seja maior que o custo atual do sucessor na fronteira nada é feito
+                fronteira.update((sucessor, novasAcoes.copy(), novoCusto), novoCusto)
     
     # Caso não encontrou o estado objetivo na busca, não realiza nenhuma ação
     return []
@@ -290,7 +282,7 @@ def greedySearch(problem, heuristic=nullHeuristic):
 
                 # Coloca o sucessor na fronteira, com seu custo igual ao valor da 
                 # heurística para ele e com a lista de ações tomadas
-                fronteira.push((sucessor, novasAcoes.copy()), heuristic(sucessor, problem))
+                fronteira.update((sucessor, novasAcoes.copy()), heuristic(sucessor, problem))
                 
     # Caso não encontrou o estado objetivo na busca, não realiza nenhuma ação
     return []
@@ -298,12 +290,6 @@ def greedySearch(problem, heuristic=nullHeuristic):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    
-    # Importa a biblioteca de matemática para ter acesso à constante inf
-    import math
-    
-    # Dicionário do custo para ir do nó inicial aos nós expandidos
-    custos = dict()
     
     # Conjunto dos nós expandidos
     expandidos = set()
@@ -315,15 +301,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     # Inicia a fronteira com o estado inicial, custo igual a sua heurística
     # e a lista de ações vazia
-    fronteira.push((estadoInicial, []), heuristic(estadoInicial, problem))
-
-    # Inicia o dicionário dos custos para o estado inicial com 0
-    custos[estadoInicial] = 0
+    fronteira.push((estadoInicial, [], 0), heuristic(estadoInicial, problem))
 
     # Enquanto existe nós na fronteira
     while not fronteira.isEmpty():
         # Obtém e remove o próximo nó da fronteira
-        proximoEstado, acoes = fronteira.pop()
+        proximoEstado, acoes, custo = fronteira.pop()
 
         # Se o nó obtido é o objetivo
         if problem.isGoalState(proximoEstado):
@@ -341,21 +324,20 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         sucessores = problem.getSuccessors(proximoEstado)
 
         # Itera pelos sucessores do nó
-        for (sucessor, acao, custo) in sucessores:
+        for (sucessor, acao, custoSucessor) in sucessores:
 
-            # Se o sucessor não foi expandido e o custo para alcançá-lo até o momento é maior do que o
-            # custo de ir do nó inicial até o nó atual somado do custo de ir do nó atual até o sucessor
-            if sucessor not in expandidos and custos.get(sucessor, math.inf) > custos.get(proximoEstado, math.inf) + custo:
-
-                # Atualiza o novo menor custo de alcançar o sucessor a partir do nó inicial
-                custos[sucessor] = custos.get(proximoEstado, math.inf) + custo
+            # Se o sucessor não foi expandido
+            if sucessor not in expandidos:
+                # Calcula o novo custo de chegar ao sucessor
+                novoCusto = custo+custoSucessor
 
                 # Acrescenta a ação tomada para alcançá-lo
                 novasAcoes = acoes + [acao]
 
                 # Coloca o sucessor na fronteira, com seu novo custo somado à sua heurística
-                # e com a lista de ações tomadas
-                fronteira.push((sucessor, novasAcoes.copy()), custos[sucessor]+heuristic(sucessor, problem))
+                # e com a lista de ações tomadas. Caso o novo custo seja maior que o custo atual
+                # do sucessor na fronteira nada é feito
+                fronteira.update((sucessor, novasAcoes.copy(), novoCusto), novoCusto+heuristic(sucessor, problem))
     
     # Caso não encontrou o estado objetivo na busca, não realiza nenhuma ação
     return []
